@@ -1,7 +1,7 @@
 <cfcomponent extends="Controller">
 
 	<cffunction name="compare_forms" returnType="any" access="public" output="true">
-		<cfif isDefined("form.file_path_1") AND len(trim(form.file_path_1))>
+		<cfif isDefined("form.file_paths") AND len(trim(form.file_paths))>
 			<cffile
 				action="uploadAll"
 				destination="#getDirectoryFromPath(expandPath(cgi.script_name))#files\temporary_uploads\"
