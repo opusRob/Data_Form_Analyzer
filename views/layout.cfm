@@ -10,6 +10,7 @@
 		#styleSheetLinkTag("bootstrap/css/bootstrap.min")#
 
 		#styleSheetLinkTag("custom")#
+		<!--- #javaScriptIncludeTag("custom")# --->
 
 		#request.wheels.params.controller IS "compare_forms" && request.wheels.params.action IS "index" ? javaScriptIncludeTag("compare_forms") : ""#
 	</cfoutput>

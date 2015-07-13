@@ -3,3 +3,36 @@
 	padding: 0px 0px;
 	margin: 0px 8px;
 }
+
+
+------------------------------------------------------------------------------
+/*.table th.data_form_headers {
+	white-space: nowrap; 
+    height: 500px; 
+    text-align: left; 
+    vertical-align: bottom; 
+    padding: 0px 0px 0px 5px; 
+}
+.table th.data_form_headers > div {
+    width: 30px; 
+	border: solid 1px #ffcc00;
+	-ms-transform: rotate(75deg);  IE 9 
+    -webkit-transform: rotate(75deg);  Chrome, Safari, Opera 
+	transform: 
+		rotate(-45deg)
+		translate(4px, 19px);
+	transform-origin: top left; 
+}
+.table th.data_form_headers > div > div {
+	width: 500px; 
+	padding: 5px 10px; 
+	background: #f9f9f9; 
+	border-bottom: solid 1px #ccc; 
+}*/
+
+/*table.th_rotated_45 th {
+    text-align: left; 
+    vertical-align: bottom; 
+    padding: 0px 0px 0px 5px; 
+}*/
+/*---------------------------------*/
