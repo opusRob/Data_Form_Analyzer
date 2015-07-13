@@ -21,13 +21,27 @@
 				<td><span>#request.qryFieldLabels.field_label#</span></td>
 				<td><span>#request.qryFieldLabels.data_type#</span></td>
 				<cfloop query="request.qryFormNames">
-					<td><span>#yesNoFormat(
+					<!--- Temporarily using the inline CFQUERY block below, because the commented-out queryGetData(...) call further down is causing a strange error. --->
+					<cfquery name="variables.qryHasField" dbtype="query">
+						SELECT 1 AS [x]
+						FROM request.qryData
+						WHERE [field_label_stripped] = <cfqueryparam value="#request.qryFieldLabels.field_label_stripped#" cfsqltype="cf_sql_varchar"/>
+							AND LOWER([data_type]) = <cfqueryparam value="#lCase(request.qryFieldLabels.data_type)#" cfsqltype="cf_sql_varchar"/>
+							AND LOWER([form_name]) = <cfqueryparam value="#lCase(request.qryFormNames.form_name)#" cfsqltype="cf_sql_varchar"/>
+					</cfquery>
+					<td><span>#yesNoFormat(variables.qryHasField.recordCount GT 0)#</span></td>
+					<!--- <td><span>#yesNoFormat(
 						queryGetData(
-							request.qryData
-							, ["field_label", "data_type", "form_name"]
-							, [request.qryFieldLabels.field_label, request.qryFieldLabels.data_type, request.qryFormNames.form_name]
+							qryData = request.qryData
+							, aryFields = ["field_label_stripped", "data_type", "form_name"]
+							, aryFormatFunctions = ["", "LOWER", "LOWER"]
+							, aryValues = [
+								request.qryFieldLabels.field_label_stripped
+								, lCase(request.qryFieldLabels.data_type)
+								, lCase(request.qryFormNames.form_name)
+							]
 						).recordCount GT 0
-					)#</span></td>
+					)#</span></td> --->
 				</cfloop>
 			</tr>
 		</cfloop>

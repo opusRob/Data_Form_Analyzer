@@ -84,6 +84,7 @@
 				& ",field_number"
 				& ",data_type"
 				& ",field_label"
+				& ",field_label_stripped"
 				& ",tab_level"
 			, "varchar"
 				& ",varchar"
@@ -92,6 +93,7 @@
 				& ",integer"
 				& ",integer"
 				& ",integer"
+				& ",varchar"
 				& ",varchar"
 				& ",varchar"
 				& ",varchar"
@@ -105,6 +107,7 @@
 		<cfset local.strFieldNumber = ""/>
 		<cfset local.strDataType = ""/>
 		<cfset local.strFieldLabel = ""/>
+		<cfset local.strFieldLabelStripped = ""/>
 		<cfset local.intTabLevel = 0/>
 		<cfset local.intParentFieldID = 0/>
 
@@ -133,6 +136,13 @@
 				//Field label
 				local.strFieldLabel = getFieldLabel(local.strFileLine);
 
+				//Field label stripped of any non-alpha/numeric chars, and doubled spaces/tabs
+				local.strFieldLabelStripped = lCase(reReplaceNoCase(local.strFieldLabel, "[^a-zA-Z0-9\s_]", "", "all"));
+				local.strFieldLabelStripped = trim(reReplace(local.strFieldLabelStripped, "\s", chr(32), "all"));
+				while (find("#chr(32)##chr(32)#", local.strFieldLabelStripped)) {
+					local.strFieldLabelStripped = replace(local.strFieldLabelStripped, "#chr(32)##chr(32)#", chr(32), "all");
+				}
+
 				//Tab/indent level
 				local.intTabLevel = getTabLevel(local.strFileLine);
 
@@ -154,6 +164,7 @@
 					querySetCell(local.qryData, "field_number", local.strFieldNumber);
 					querySetCell(local.qryData, "data_type", local.strDataType);
 					querySetCell(local.qryData, "field_label", local.strFieldLabel);
+					querySetCell(local.qryData, "field_label_stripped", local.strFieldLabelStripped);
 					querySetCell(local.qryData, "tab_level", local.intTabLevel);
 					querySetCell(local.qryData, "parent_field_id", local.intParentFieldID);
 				}
@@ -236,27 +247,43 @@
 
 	<cffunction name="getDistinctFieldsFromQuery" returnType="query" access="public" output="true">
 		<cfargument name="qryData" type="query" required="true"/>
-		<cfargument name="strFieldList" type="string" default=""/>
+		<cfargument name="aryFieldList" type="array" default="#arrayNew(1)#"/>
+		<!--- [{strFieldName = "field_label", strBefore = "MAX(", strAfter = ")", strAlias = "field_label"}] --->
 
-		<cfif NOT len(arguments.strFieldList)>
-			<cfset local.lstQueryColumns = this.getQueryFieldsInfo(arguments.qryData).lstQueryColumns/>
+		<cfif NOT arrayLen(arguments.aryFieldList)>
+			<cfset local.aryQueryColumns = arrayNew(1)/>
+			<cfloop list="#this.getQueryFieldsInfo(arguments.qryData).lstQueryColumns#" index="local.i">
+				<cfset local.aryQueryColumns = arrayAppend(local.aryQueryColumns, {strFieldName = local.i})/>
+			</cfloop>
 		<cfelse>
-			<cfset local.lstQueryColumns = arguments.strFieldList/>
+			<cfset local.aryQueryColumns = arguments.aryFieldList/>
 		</cfif>
 
 		<cfquery name="local.qryData" dbtype="query">
-			SELECT DISTINCT
+			SELECT
 				<cfset local.iCount = 0/>
-				<cfloop list="#local.lstQueryColumns#" index="local.i">
+				<cfloop array="#local.aryQueryColumns#" index="local.i">
+					<cfset local.strCurrentColumn = structKeyExists(local.i, "strBefore") ? local.i.strBefore : ""/>
+					<cfset local.strCurrentColumn &= "[" & local.i.strFieldName & "]"/>
+					<cfset local.strCurrentColumn &= structKeyExists(local.i, "strAfter") ? local.i.strAfter : ""/>
+					<cfset local.strCurrentColumn &= structKeyExists(local.i, "strAlias") ? " AS [#local.i.strAlias#]" : ""/>
+
 					<cfset local.iCount++/>
-					#local.iCount GT 1 ? ', ' : ''#[#local.i#]
+					#local.iCount GT 1 ? ', ' : ''##local.strCurrentColumn#
 				</cfloop>
 			FROM arguments.qryData
+			<cfset local.iCount = 0/>
+			<cfloop array="#local.aryQueryColumns#" index="local.i">
+				<cfif NOT (structKeyExists(local.i, "bolExcludeFromGroupBy") AND local.i.bolExcludeFromGroupBy)>
+					<cfset local.iCount++/>
+					#local.iCount EQ 1 ? "GROUP BY" : ","# #"[" & local.i.strFieldName & "]"#
+				</cfif>
+			</cfloop>
 			ORDER BY
 				<cfset local.iCount = 0/>
-				<cfloop list="#local.lstQueryColumns#" index="local.i">
+				<cfloop array="#local.aryQueryColumns#" index="local.i">
 					<cfset local.iCount++/>
-					#local.iCount GT 1 ? ', ' : ''#[#local.i#]
+					#local.iCount GT 1 ? ', ' : ''#[#structKeyExists(local.i, "strAlias") ? local.i.strAlias : local.i.strFieldName#]
 				</cfloop>
 		</cfquery>
 
@@ -267,6 +294,7 @@
 	<cffunction name="queryGetData" returnType="query" access="public" output="true">
 		<cfargument name="qryData" type="query" required="true"/>
 		<cfargument name="aryFields" type="array" default="#arrayNew(1)#"/>
+		<cfargument name="aryFormatFunctions" type="array" default="#arrayNew(1)#"/>
 		<cfargument name="aryValues" type="array" default="#arrayNew(1)#"/>
 
 		<cfquery name="local.qryData" dbtype="query">
@@ -276,7 +304,7 @@
 				<cfset local.iCount = 0/>
 				<cfloop array="#arguments.aryFields#" index="local.i">
 					<cfset local.iCount++/>
-					#local.iCount EQ 1 ? "WHERE" : "AND"# [#local.i#]
+					#local.iCount EQ 1 ? "WHERE" : "AND"# #len(arguments.aryFormatFunctions[local.iCount]) ? "#arguments.aryFormatFunctions[local.iCount]#([#local.i#])" : "[#local.i#]"#
 						= <cfqueryparam
 							value="#arguments.aryValues[local.iCount]#"
 							cfsqltype="cf_sql_#this.getQueryFieldDataType(arguments.qryData, local.i)#"
@@ -286,6 +314,21 @@
 		</cfquery>
 
 		<cfreturn local.qryData/>
+
+	</cffunction>
+
+	<cffunction name="listToArrayOfStructs" returnType="array" access="public" output="true">
+		<cfargument name="strList" type="string" required="true"/>
+		<cfargument name="strStructKeyName" type="string" required="true"/>
+		<cfargument name="strDelimiters" type="string" default=","/>
+
+		<cfset local.aryData = arrayNew(1)/>
+
+		<cfloop list="#arguments.strList#" index="local.i" delimiters="#arguments.strDelimiters#">
+			<cfset local.aryData = arrayAppend(local.aryData, {"#arguments.strStructKeyName#" = local.i})/>
+		</cfloop>
+
+		<cfreturn local.aryData/>
 
 	</cffunction>
 
