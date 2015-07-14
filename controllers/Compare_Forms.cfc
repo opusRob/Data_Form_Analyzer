@@ -32,14 +32,21 @@
 			<cfset request.lstQueryColumns = arrayToList(request.aryFileQueries[1].getColumnList())/>
 
 			<cfset request.qryData = queryMerge(request.aryFileQueries)/>
-			<cfset request.qryFieldLabels = getDistinctFieldsFromQuery(
-				request.qryData
-				, [
-					{strFieldName = "field_label_stripped"}
-					, {strFieldName = "field_label", strBefore = "MAX(", strAfter = ")", strAlias = "field_label", bolExcludeFromGroupBy = true}
+
+			<cfset local.aryCheckData = [
+				{strFieldName = "field_label_stripped"}
+				, {strFieldName = "field_label", strBefore = "MAX(", strAfter = ")", strAlias = "field_label", bolExcludeFromGroupBy = true}
+			]/>
+
+			<cfif structKeyExists(form, "include_data_type")>
+				<cfset arrayAppend(
+					local.aryCheckData
 					, {strFieldName = "data_type", strBefore = "LOWER(", strAfter = ")", strAlias = "data_type"}
-				]
-			)/>
+				)/>
+			</cfif>
+
+			<cfset request.qryFieldLabels = getDistinctFieldsFromQuery(request.qryData, local.aryCheckData)/>
+
 			<cfset request.qryFormNames = getDistinctFieldsFromQuery(request.qryData, [{strFieldName = "form_name"}])/>
 		</cfif>
 	</cffunction>
