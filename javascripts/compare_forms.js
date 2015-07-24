@@ -26,3 +26,12 @@ $(document).on(
 		return false;
 	}
 );
+
+$(document).on(
+	"change"
+	, "#comparison_type"
+	, function() {
+			var objSelectMenu = $(this);
+			$("#include_data_type").prop("disabled", $(objSelectMenu).val() != "fields");
+		}
+);

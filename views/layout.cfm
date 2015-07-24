@@ -1,7 +1,7 @@
 <!--- Place HTML here that should be used as the default layout of your application. --->
 
 <html>
-
+	<title>CF: Data Form Analyzer</title>
 
 	<cfoutput>
 		#javaScriptIncludeTag("jQuery/jquery-1.11.3")#

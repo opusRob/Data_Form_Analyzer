@@ -12,14 +12,29 @@
 		, multiple = "true"
 	)#
 	<br />
-	#checkBoxTag(
-		name = "include_data_type"
-		, label = " Include Data Type"
-		, labelPlacement = "aroundRight"
-		, class = "checkbox-inline"
-		, value = "1"
-		, uncheckedValue = "0"
+	#selectTag(
+		name = "comparison_type"
+		, label = "Comparison Type: "
+		, class = "form-control"
+		, options = [
+			{id: "fields", value: "Fields"}
+			, {id: "sections", value: "Sections"}
+		]
+		, valueField = "id"
+		, textField = "value"
 	)#
+	<br />
+	<label for="include_data_type">
+		<input
+			type="checkbox"
+			name="include_data_type"
+			id="include_data_type"
+			class="checkbox-inline"
+			value="1"
+			#isDefined("form.include_data_type") AND form.include_data_type ? "checked" : ""#
+		/>
+		Include Data Type
+	</label>
 	<br />
 	#submitTag(value = "Compare Forms", class="btn btn-primary")#
 
